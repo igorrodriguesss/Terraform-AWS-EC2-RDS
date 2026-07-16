@@ -97,7 +97,7 @@ docker push <account_id>.dkr.ecr.us-east-1.amazonaws.com/flask-app:latest
 ### 4. Rodar o playbook
 
 ```bash
-ansible-playbook -i hosts.ini deploy.yml --ask-vault-pas
+ansible-playbook -i hosts.ini deploy.yml --ask-vault-pass
 ```
 
 O playbook executa, em ordem:
