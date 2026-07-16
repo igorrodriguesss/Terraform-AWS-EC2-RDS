@@ -1,3 +1,33 @@
+- name: Criar diretório da aplicação
+  file:
+    path: /home/ubuntu/app
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+
+- name: Baixar aplicação do S3
+  get_url:
+    url: https://tbc-flask-app-deploy-bucket.s3.amazonaws.com/app.zip
+    dest: /home/ubuntu/app.zip
+
+- name: Extrair aplicação
+  unarchive:
+    src: /home/ubuntu/app.zip
+    dest: /home/ubuntu/app/
+    remote_src: yes
+    owner: ubuntu
+    group: ubuntu
+
+- name: Criar virtualenv
+  command: python3 -m venv /home/ubuntu/venv
+  args:
+    creates: /home/ubuntu/venv
+
+- name: Instalar dependências no venv
+  pip:
+    requirements: /home/ubuntu/app/requirements.txt
+    virtualenv: /home/ubuntu/venv
+
 - name: Criar serviço systemd para a Flask app
   copy:
     dest: /etc/systemd/system/flaskapp.service

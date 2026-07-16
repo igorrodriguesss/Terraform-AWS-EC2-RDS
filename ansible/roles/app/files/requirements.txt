@@ -1,5 +1,0 @@
-Flask==2.3.3
-PyMySQL==1.1.1
-cryptography==43.0.3
-wtforms
-passlib
