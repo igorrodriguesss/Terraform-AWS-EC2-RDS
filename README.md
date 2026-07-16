@@ -1,5 +1,5 @@
 
-# Utilizando Terraform para provisior EC2 + RDS na AWS e Ansible para automatizar configuracöes na EC2.
+# Utilizando Terraform para provisior EC2 + RDS na AWS e Ansible para automatizar configurações  na EC2.
 
 Projeto de estudo que provisiona uma infraestrutura completa na AWS — VPC, EC2 e RDS (MySQL) — usando **Terraform** para a infraestrutura e **Ansible** para configuração e deploy da aplicação. O objetivo central é validar a comunicação entre uma instância EC2 e um banco RDS dentro de uma rede segmentada (subnets públicas e privadas).
 ![Arquitetura do projeto](terraform/images/Projeto.png)
