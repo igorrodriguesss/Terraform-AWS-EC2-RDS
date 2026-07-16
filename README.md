@@ -100,6 +100,11 @@ docker push <account_id>.dkr.ecr.us-east-1.amazonaws.com/flask-app:latest
 ansible-playbook -i hosts.ini deploy.yml --ask-vault-pass
 ```
 
+O playbook executa, em ordem:
+1. **packages** — instala dependências de sistema como python3-pymysql, baixa e instala AWS CLI
+2. **db** — cria o banco `mydatabase` e a tabela `users` no RDS
+3. **app** — baixa o dockerfile e sobe a Flask app via `Docker` (porta 8080)
+
 ### 5. Acessando Aplicação 
 
 Para acessar aplicação basta usar o IP da EC2:8080
@@ -109,11 +114,6 @@ Para acessar aplicação basta usar o IP da EC2:8080
 E para validar se o banco está sendo alimentado basta consultar diretamente pelo mySQL dentro da EC2
 
 <img src="terraform/images/2.png" alt="database" width="600">
-
-O playbook executa, em ordem:
-1. **packages** — instala dependências de sistema como python3-pymysql, baixa e instala AWS CLI
-2. **db** — cria o banco `mydatabase` e a tabela `users` no RDS
-3. **app** — baixa o dockerfile e sobe a Flask app via `Docker` (porta 8080)
 
 ## Pontos de atenção / possíveis evoluções
 
