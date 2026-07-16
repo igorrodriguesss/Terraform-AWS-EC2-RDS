@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lista de Usuários</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>Lista de Usuários</h1>
+    <a href="/add">Adicionar Usuário</a>
+    <ul>
+    {% for u in users %}
+      <li>{{ u[1] }} - {{ u[2] }} 
+          <a href="/edit/{{ u[0] }}">Editar</a> 
+          <a href="/delete/{{ u[0] }}">Excluir</a>
+      </li>
+    {% endfor %}
+    </ul>
+</div>
+</body>
+</html>

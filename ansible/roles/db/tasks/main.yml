@@ -1,0 +1,21 @@
+- name: Criar banco de dados
+  mysql_db:
+    name: mydatabase
+    state: present
+    login_host: "{{ db_host }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+
+- name: Criar tabela users
+  community.mysql.mysql_query:
+    login_host: "{{ db_host }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+    login_db: mydatabase
+    query: |
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100),
+        email VARCHAR(100)
+      );
+

@@ -1,0 +1,9 @@
+- name: Preparar servidor e deploy da aplicação
+  hosts: ec2
+  become: yes
+  roles:
+    - packages
+    - db
+    - app
+
+
