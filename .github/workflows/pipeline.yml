@@ -1,12 +1,34 @@
-name: CI/CD Flask App
+name: CI/CD Infra + App
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Instalar Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Apply
+        run: terraform -chdir=terraform apply -auto-approve
+
   build-and-push:
     runs-on: ubuntu-latest
+    needs: terraform
     steps:
       - uses: actions/checkout@v3
 
@@ -21,21 +43,25 @@ jobs:
         run: |
           aws ecr get-login-password --region us-east-1 \
           | docker login --username AWS \
-          --password-stdin <account_id>.dkr.ecr.us-east-1.amazonaws.com
+          --password-stdin 829115578807.dkr.ecr.us-east-1.amazonaws.com
 
       - name: Build da imagem
         run: docker build -t flaskapp:latest .
 
       - name: Tag da imagem
-        run: docker tag flaskapp:latest <account_id>.dkr.ecr.us-east-1.amazonaws.com/flask-app:latest
+        run: docker tag flaskapp:latest 829115578807.dkr.ecr.us-east-1.amazonaws.com/flask-app:latest
 
       - name: Push para ECR
-        run: docker push <account_id>.dkr.ecr.us-east-1.amazonaws.com/flask-app:latest
+        run: docker push 829115578807.dkr.ecr.us-east-1.amazonaws.com/flask-app:latest
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build-and-push   # <- garante que só roda depois
+    needs: build-and-push
     steps:
-      - name: Executar Ansible para deploy
-        run: |
-          ansible-playbook -i ansible/hosts.ini ansible/deploy.yml
+      - uses: actions/checkout@v3
+
+      - name: Instalar Ansible
+        run: sudo apt-get update && sudo apt-get install -y ansible
+
+      - name: Rodar playbook de deploy
+        run: ansible-playbook -i ansible/hosts ansible/deploy.yml
