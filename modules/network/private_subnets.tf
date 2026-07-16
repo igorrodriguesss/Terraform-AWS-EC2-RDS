@@ -1,6 +1,6 @@
 data "aws_availability_zones" "available" {}
 
-resource "aws_subnet" "private" {
+resource "aws_subnet" "private_subnets" {
   count                   = 2
   vpc_id                  = aws_vpc.projeto_tcb.id
   cidr_block              = cidrsubnet(var.cidr_block, 8, count.index + 1) # desloca para não conflitar com públicas

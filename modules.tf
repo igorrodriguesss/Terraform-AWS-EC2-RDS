@@ -22,3 +22,20 @@ module "ec2_instance" {
     }
   )
 }
+
+module "database" {
+  source              = "./modules/database"
+  allocated_storage   = var.allocated_storage
+  engine              = var.engine
+  engine_version      = var.engine_version
+  instance_class      = var.instance_class
+  db_name             = var.db_name
+  username            = var.username
+  password            = var.password
+  parameter_group_name = var.parameter_group_name 
+  private_subnets     = module.network.private_subnets
+  tags                = var.tags
+  project_name        = var.project_name
+  publicly_accessible = var.publicly_accessible
+  vpc_id = module.network.vpc_id
+}
