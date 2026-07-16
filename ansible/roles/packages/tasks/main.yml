@@ -1,30 +1,25 @@
-- name: Atualizar pacotes
+- name: Instalar cliente MySQL para Python
   apt:
+    name: python3-pymysql
+    state: present
     update_cache: yes
 
-- name: Instalar pacotes necessários
+- name: Instalar AWS CLI
   apt:
-    name:
-      - python3-dev
-      - python3-pip
-      - python3-venv
-      - python3-virtualenv
-      - build-essential
-      - libssl-dev
-      - libffi-dev
-      - libmysqlclient-dev
-      - pkg-config
-      - mysql-client
-      - unzip
+    name: unzip
     state: present
+    update_cache: yes
 
-- name: Instalar pacotes Python via pip
-  pip:
-    name:
-      - Flask==2.3.3
-      - PyMySQL==1.1.1
-      - cryptography==43.0.3
-      - wtforms
-      - passlib
-    executable: pip3
-    extra_args: --break-system-packages --ignore-installed
+- name: Baixar AWS CLI v2
+  get_url:
+    url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    dest: /tmp/awscliv2.zip
+
+- name: Descompactar AWS CLI
+  unarchive:
+    src: /tmp/awscliv2.zip
+    dest: /tmp/
+    remote_src: yes
+
+- name: Instalar AWS CLI
+  command: /tmp/aws/install --update 

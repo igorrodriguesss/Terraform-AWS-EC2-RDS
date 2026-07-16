@@ -1,13 +1,5 @@
-- name: Criar banco de dados
-  mysql_db:
-    name: mydatabase
-    state: present
-    login_host: "{{ db_host }}"
-    login_user: "{{ db_user }}"
-    login_password: "{{ db_password }}"
-
 - name: Criar tabela users
-  community.mysql.mysql_query:
+  ansible.mysql.mysql_query:
     login_host: "{{ db_host }}"
     login_user: "{{ db_user }}"
     login_password: "{{ db_password }}"
@@ -18,4 +10,5 @@
         name VARCHAR(100),
         email VARCHAR(100)
       );
+
 

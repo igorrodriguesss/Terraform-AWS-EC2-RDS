@@ -1,57 +1,21 @@
-- name: Criar diretório da aplicação
-  file:
-    path: /home/ubuntu/app
-    state: directory
-    owner: ubuntu
-    group: ubuntu
+    - name: Instalar Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
 
-- name: Baixar aplicação do S3
-  get_url:
-    url: https://tbc-flask-app-deploy-bucket.s3.amazonaws.com/app.zip
-    dest: /home/ubuntu/app.zip
+    - name: Login no ECR usando módulo Ansible
+      community.docker.docker_login:
+        registry_url: 829115578807.dkr.ecr.us-east-1.amazonaws.com
+        username: AWS
+        password: "{{ lookup('pipe', 'aws ecr get-login-password --region us-east-1') }}"
 
-- name: Extrair aplicação
-  unarchive:
-    src: /home/ubuntu/app.zip
-    dest: /home/ubuntu/app/
-    remote_src: yes
-    owner: ubuntu
-    group: ubuntu
 
-- name: Criar virtualenv
-  command: python3 -m venv /home/ubuntu/venv
-  args:
-    creates: /home/ubuntu/venv
-
-- name: Instalar dependências no venv
-  pip:
-    requirements: /home/ubuntu/app/requirements.txt
-    virtualenv: /home/ubuntu/venv
-
-- name: Criar serviço systemd para a Flask app
-  copy:
-    dest: /etc/systemd/system/flaskapp.service
-    content: |
-      [Unit]
-      Description=Flask App
-      After=network.target
-
-      [Service]
-      User=ubuntu
-      WorkingDirectory=/home/ubuntu/app
-      ExecStart=/home/ubuntu/venv/bin/python3 /home/ubuntu/app/app.py
-      Restart=always
-      RestartSec=5
-
-      [Install]
-      WantedBy=multi-user.target
-
-- name: Recarregar systemd
-  systemd:
-    daemon_reload: yes
-
-- name: Habilitar e iniciar o serviço Flask
-  systemd:
-    name: flaskapp
-    enabled: yes
-    state: restarted
+    - name: Garantir que container Flask esteja rodando
+      community.docker.docker_container:
+        name: flaskapp
+        image: 829115578807.dkr.ecr.us-east-1.amazonaws.com/flask-app:latest
+        state: started
+        restart_policy: always
+        ports:
+          - "8080:8080"
