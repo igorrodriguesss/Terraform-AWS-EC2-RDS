@@ -1,8 +1,7 @@
 
-# Terraform AWS EC2 + RDS
+# Utilizando Terraform para provisior EC2 + RDS na AWS e Ansible para automatizar configuracöes na EC2.
 
-Projeto de estudo que provisiona uma infraestrutura completa na AWS — VPC, EC2 e RDS (MySQL) — usando **Terraform** para a infraestrutura e **Ansible** para configuração e deploy da aplicação. O objetivo central é validar a comunicação entre uma instância EC2 e um banco RDS dentro de uma rede segmentada (subnets públicas e privadas), com um pipeline de CI/CD automatizando todo o processo.
-
+Projeto de estudo que provisiona uma infraestrutura completa na AWS — VPC, EC2 e RDS (MySQL) — usando **Terraform** para a infraestrutura e **Ansible** para configuração e deploy da aplicação. O objetivo central é validar a comunicação entre uma instância EC2 e um banco RDS dentro de uma rede segmentada (subnets públicas e privadas).
 ![Arquitetura do projeto](terraform/images/Projeto.png)
 
 ## Arquitetura
@@ -12,14 +11,10 @@ Projeto de estudo que provisiona uma infraestrutura completa na AWS — VPC, EC2
 - **EC2** rodando uma aplicação Flask, em subnet pública, acessível via SSH e HTTP na porta 8080
 - **RDS MySQL** em subnet privada, acessível apenas pela EC2
 - **ECR** (Elastic Container Registry) para armazenar a imagem Docker da aplicação
-- **GitHub Actions** orquestrando Terraform (infra) → build/push da imagem para o ECR → Ansible (deploy na EC2)
 
 ## Estrutura do repositório
 
 ```
-.
-├── .github/workflows/
-│   └── pipeline.yml          # Pipeline de CI/CD (Terraform + Docker/ECR + Ansible)
 ├── ansible/
 │   ├── deploy.yml            # Playbook principal (packages → db → app)
 │   ├── hosts.ini             # Inventory da EC2
@@ -52,7 +47,6 @@ Projeto de estudo que provisiona uma infraestrutura completa na AWS — VPC, EC2
 - **Python 3 / Flask 2.3.3** + **PyMySQL**
 - **MySQL 8.0** (RDS)
 - **Docker** + **Amazon ECR**
-- **GitHub Actions** (CI/CD)
 
 ## Pré-requisitos
 
@@ -75,37 +69,41 @@ terraform apply
 
 Isso cria a VPC, subnets, EC2, RDS e o repositório ECR.
 
-### 2. Configurar o inventory do Ansible
+### 2.Configuração de variáveis com Ansible Vault
 
-Edite `ansible/hosts.ini` com o IP público da EC2 recém-criada:
+As credenciais sensíveis (como `db_password`) ficam em `group_vars/all/vault.yml`, criptografadas com **Ansible Vault**.  
+As variáveis não sensíveis (como `db_host` e `db_user`) ficam em `group_vars/all/vars.yml`.
+
+Para criar o arquivo `vault.yml` criptografado:
+```bash
+ansible-vault create group_vars/all/vault.yml
+```
+No arquivo group_vars/all/vars.yml:
 
 ```ini
-[ec2]
-<IP_DA_EC2> ansible_user=ubuntu ansible_ssh_private_key_file=<caminho-da-sua-chave>
+db_host: mydb.xxxxx.us-east-1.rds.amazonaws.com
+db_user: admin
 ```
 
-### 3. Rodar o playbook
+### 3. Push do dockerfile para dentro do ECR
+
+```ini
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account_id>.dkr.ecr.us-east-1.amazonaws.com
+docker build -t flaskapp:latest .
+docker tag flaskapp:latest <account_id>.dkr.ecr.us-east-1.amazonaws.com/flask-app:latest
+docker push <account_id>.dkr.ecr.us-east-1.amazonaws.com/flask-app:latest
+```
+
+### 4. Rodar o playbook
 
 ```bash
-ansible-playbook -i ansible/hosts.ini ansible/deploy.yml
+ansible-playbook -i hosts.ini deploy.yml --ask-vault-pas
 ```
 
 O playbook executa, em ordem:
-1. **packages** — instala dependências de sistema (build tools, driver MySQL) e libs Python
+1. **packages** — instala dependências de sistema como python3-pymysql, baixa e instala AWS CLI
 2. **db** — cria o banco `mydatabase` e a tabela `users` no RDS
-3. **app** — baixa a aplicação, cria o virtualenv, instala dependências e sobe a Flask app via `systemd` (porta 8080)
-
-## CI/CD
-
-O workflow em `.github/workflows/pipeline.yml` roda a cada push na branch `main` e executa três jobs em sequência:
-
-1. **terraform** — aplica a infraestrutura (`terraform apply -auto-approve`)
-2. **build-and-push** — builda a imagem Docker da aplicação e sobe para o ECR
-3. **deploy** — instala o Ansible no runner e executa o playbook de deploy na EC2
-
-Secrets necessários no repositório (**Settings → Secrets and variables → Actions**):
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
+3. **app** — baixa o dockerfile e sobe a Flask app via `Docker` (porta 8080)
 
 ## Pontos de atenção / possíveis evoluções
 
@@ -114,8 +112,6 @@ Como é um projeto de estudo focado na comunicação EC2 ↔ RDS, alguns pontos 
 - **Credenciais do banco**: hoje estão hardcoded em `app/app.py` e nas tasks do Ansible. Em um cenário real, migrar para variáveis de ambiente e/ou **Ansible Vault** / **AWS Secrets Manager**.
 - **Security Groups abertos**: as regras de entrada (SSH, 8080, 3306) liberam `0.0.0.0/0`. Vale restringir a IPs específicos.
 - **RDS multi-AZ**: está habilitado (`multi_az = true`), o que é ótimo para alta disponibilidade, mas aumenta custo — considerar `false` para ambientes de estudo.
-- **Deploy via systemd vs. Docker**: o job de CI já builda e sobe a imagem para o ECR, mas o playbook `app` ainda faz deploy via zip + venv + systemd. Unificar esse fluxo (Ansible puxando a imagem do ECR e rodando via Docker) deixaria o pipeline mais consistente ponta a ponta.
-
 ## Licença
 
 Projeto pessoal de estudo, sem licença específica definida.
