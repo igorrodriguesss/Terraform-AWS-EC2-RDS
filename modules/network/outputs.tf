@@ -3,7 +3,7 @@ output "public_subnet" {
 }
 
 output "private_subnets" {
-  value = [for subnet in aws_subnet.private : subnet.id]
+  value = [for subnet in aws_subnet.private_subnets : subnet.id]
 }
 
 output "vpc_id" {

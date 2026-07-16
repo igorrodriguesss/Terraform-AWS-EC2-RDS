@@ -1,7 +1,3 @@
-variable "private_subnets" {
-  type = list(string)
-}
-
 resource "aws_db_subnet_group" "this" {
   name       = "${var.project_name}-rds-subnet-group"
   subnet_ids = var.private_subnets
@@ -22,7 +18,7 @@ resource "aws_db_instance" "this" {
   password                = var.password
   parameter_group_name    = var.parameter_group_name
   db_subnet_group_name    = aws_db_subnet_group.this.name   # <- usa o subnet group
-  vpc_security_group_ids  = [aws_security_group.rds_sg.id]
+  vpc_security_group_ids  = [aws_security_group.rds_security_group.id]
   skip_final_snapshot     = true
   multi_az                = true
   publicly_accessible     = var.publicly_accessible

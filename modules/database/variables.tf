@@ -58,3 +58,6 @@ variable "publicly_accessible" {
   description = "Whether the EC2 instance should be publicly accessible"
 }
 
+variable "private_subnets" {
+  type = list(string)
+}
